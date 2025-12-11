@@ -47,7 +47,7 @@ jobs:
           sed -i 's/from .collection/from collection/g' example.py
           
           # 2. 填入 UID (33766904)
-          sed -i 's/USER_ID = .*/USER_ID = 33766904/' example.py
+          sed -i 's/USER_ID = .*/USER_ID = 33443193/' example.py
           
           # 3. 让脚本直接从环境变量读取 Token (防错)
           sed -i "s/REFRESH_TOKEN = .*/import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')/" example.py
