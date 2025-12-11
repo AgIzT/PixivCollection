@@ -23,42 +23,55 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-- name: Run Pixiv Crawler
+      # --- 🐍 Python 爬虫部分 (已加入自动修复) ---
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Run Pixiv Crawler
         env:
+          # 把你的保险箱钥匙传给脚本
           PHPSESSID: ${{ secrets.PHPSESSID }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
         run: |
-          # 1. 克隆脚本
+          # 1. 克隆大佬的脚本仓库
           git clone https://github.com/orilights/python_scripts.git
+          
+          # 2. 进入脚本目录
           cd python_scripts/pixiv_collection
           
-          # 2. 安装依赖
+          # 3. 安装依赖
           pip install -r requirements.txt
           
-          # ================= 关键修复开始 =================
+          # ================= 🔧 自动修复代码 =================
           
-          # 修复A: 解决 ImportError (去掉导入语句里的相对引用点)
+          # 修复 A: 解决 ImportError (去掉导入语句里的相对引用点)
+          # 原文是 from .collection，我们把它改成 from collection
           sed -i 's/from .collection/from collection/g' example.py
           
-          # 修复B: 自动填入你的 UID (防止它因为没 ID 报错)
-          # 我用了你之前截图里的 UID: 33766904
+          # 修复 B: 自动填入你的 UID (33766904)
+          # 这样你就不用手动去改 Python 文件了
           sed -i 's/USER_ID = .*/USER_ID = 33766904/' example.py
           
-          # ================= 关键修复结束 =================
+          # ================= 🔧 修复结束 =================
           
-          # 3. 运行脚本
+          # 4. 运行真正的脚本
+          echo "🚀 开始运行爬虫..."
           python example.py
           
-          # 4. 搬运数据
+          # 5. 把生成的数据搬运出来
           if [ -f "collection.json" ]; then
             mv collection.json ../../images.json
-            echo "✅ 成功！数据已生成。"
+            echo "✅ 成功！数据已生成并移动到正确位置。"
           else
-            echo "⚠️ 警告：没找到数据文件，请检查上方日志。"
+            echo "⚠️ 警告：没找到 collection.json，请检查上方是否有登录失败报错。"
           fi
+
+      # --- 🐍 爬虫结束 ---
 
       - name: Build
         run: pnpm install && pnpm build
