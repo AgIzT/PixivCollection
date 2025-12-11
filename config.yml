@@ -1,0 +1,13 @@
+# 你的 P站用户ID (必填)
+uid: 33443193
+
+# 是否下载 R18 内容 (true开启，false关闭)
+r18: true
+
+# 抓取模式 (all:全部收藏 / bookmark:仅公开收藏)
+mode: all
+
+# 存储设置
+storage:
+  enable_r2: true
+  enable_local: false
