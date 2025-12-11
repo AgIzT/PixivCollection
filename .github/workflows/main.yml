@@ -23,47 +23,43 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-      # --- 🐍 Python 爬虫部分 (已加入自动修复) ---
+      # --- 🐍 Python 爬虫部分 (版本升级到 3.11) ---
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          # 👇 这里改成了 3.11，完美解决报错
+          python-version: '3.11'
 
       - name: Run Pixiv Crawler
         env:
-          # 把你的保险箱钥匙传给脚本
           PHPSESSID: ${{ secrets.PHPSESSID }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
         run: |
-          # 1. 克隆大佬的脚本仓库
+          # 1. 克隆脚本
           git clone https://github.com/orilights/python_scripts.git
-          
-          # 2. 进入脚本目录
           cd python_scripts/pixiv_collection
           
-          # 3. 安装依赖
+          # 2. 安装依赖
           pip install -r requirements.txt
           
           # ================= 🔧 自动修复代码 =================
           
           # 修复 A: 解决 ImportError (去掉导入语句里的相对引用点)
-          # 原文是 from .collection，我们把它改成 from collection
           sed -i 's/from .collection/from collection/g' example.py
           
           # 修复 B: 自动填入你的 UID (33766904)
-          # 这样你就不用手动去改 Python 文件了
           sed -i 's/USER_ID = .*/USER_ID = 33766904/' example.py
           
           # ================= 🔧 修复结束 =================
           
-          # 4. 运行真正的脚本
+          # 3. 运行脚本
           echo "🚀 开始运行爬虫..."
           python example.py
           
-          # 5. 把生成的数据搬运出来
+          # 4. 搬运数据
           if [ -f "collection.json" ]; then
             mv collection.json ../../images.json
             echo "✅ 成功！数据已生成并移动到正确位置。"
