@@ -76,3 +76,14 @@ jobs:
           git add public/images.json
           git commit -m "Auto update images.json [skip ci]" || echo "No changes to commit"
           git push
+# ... (把这段代码加在原有步骤的后面)
+
+      - name: Upload to R2
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: pixiv-backup
+          source-dir: image
+          destination-dir: image
