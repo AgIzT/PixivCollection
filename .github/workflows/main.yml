@@ -9,7 +9,7 @@ on:
   # schedule:
   #   - cron: '0 20 * * *'
 
-# 给机器人写入权限
+# 给机器人写入权限 (把数据存回仓库)
 permissions:
   contents: write
 
@@ -47,7 +47,7 @@ jobs:
           cd python_scripts/pixiv_collection
           pip install -r requirements.txt
           
-          # 修正代码
+          # 代码修正
           sed -i 's/from .collection/from collection/g' example.py
           sed -i 's/USER_ID = .*/USER_ID = 33443193/' example.py
           sed -i "s/REFRESH_TOKEN = .*/import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')/" example.py
@@ -56,22 +56,10 @@ jobs:
           echo "🚀 开始抓取..."
           python example.py
           
+          # --- 📂 路径修正部分 ---
+          # 1. 先确保 public 文件夹存在 (没有就新建)
+          mkdir -p ../../public
+          
           if [ -f "collection.json" ]; then
-            # 把它移动到仓库根目录，方便网站读取
-            mv collection.json ../../../public/images.json
-            echo "✅ 数据已生成并移动到 public 目录！"
-          else
-            echo "⚠️ 未生成数据"
-            # 就算没抓到新图，也不要让流程报错
-            exit 0
-          fi
-
-      # --- ✨ 新增：把 images.json 存回 GitHub ---
-      - name: Commit files
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # 如果 public/images.json 有变化，就提交
-          git add public/images.json
-          git commit -m "Auto update images.json [skip ci]" || echo "No changes to commit"
-          git push
+            # 2. 移动文件 (修正为 ../../ 两层)
+            mv collection.json ../../
