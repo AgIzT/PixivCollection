@@ -88,14 +88,14 @@ jobs:
           echo "==== 寻找 image 文件夹 ===="
           find . -type d -name "image" -o -name "images"
           
-      # 👇 上传步骤先暂时改成这样（试探 public/image）
-      - name: Upload to R2
+- name: Upload to R2
         uses: ryand56/r2-upload-action@latest
-        continue-on-error: true  # 👈 关键！加上这行，就算找不到文件夹也不报错退出，让我们能看到上面的日志
         with:
           r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
           r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
           r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           r2-bucket: pixiv-backup
-          source-dir: public/image  # 我们先试一次 public/image
+          # 👇 这里填我们刚找到的“真实地址”
+          source-dir: python_scripts/pixiv_collection/image
+          # 👇 目标地址保持不变，这样你的 R2 桶里就会整整齐齐显示 image/original 等文件夹
           destination-dir: image
