@@ -22,6 +22,33 @@ jobs:
       with:
         node-version: 18
         cache: 'pnpm'
+
+# --- 开始插入的部分：安装 Python 并运行爬虫 ---
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pyyaml tqdm
+
+      - name: Run Pixiv Crawler
+        env:
+          # 把我们的保险箱钥匙传给脚本
+          PHPSESSID: ${{ secrets.PHPSESSID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: |
+          # 1. 下载大佬的 Python 脚本
+          curl -O https://raw.githubusercontent.com/orilights/python_scripts/main/pixiv_collection/main.py
+          
+          # 2. 运行脚本 (它会自动读取你写的 config.yml)
+          python main.py
+      # --- 插入结束 ---
     
     - name: Build
       run: pnpm install && pnpm build
