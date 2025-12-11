@@ -23,28 +23,46 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-      # --- 开始: Python 爬虫部分 ---
+      # --- 🐍 Python 爬虫部分 (已修复路径问题) ---
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests pyyaml tqdm
-
       - name: Run Pixiv Crawler
         env:
+          # 传递环境变量
           PHPSESSID: ${{ secrets.PHPSESSID }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          # 如果脚本支持 UID 环境变量，这里可能需要传，但我们先跑跑看
         run: |
-          curl -O https://raw.githubusercontent.com/orilights/python_scripts/main/pixiv_collection/main.py
-          python main.py
-      # --- 结束: Python 爬虫部分 ---
+          # 1. 克隆整个脚本仓库 (确保所有依赖文件都在)
+          git clone https://github.com/orilights/python_scripts.git
+          
+          # 2. 进入脚本目录
+          cd python_scripts/pixiv_collection
+          
+          # 3. 安装依赖 (根据截图里的 requirements.txt)
+          pip install -r requirements.txt
+          
+          # 4. 运行真正的脚本 (example.py)
+          # 注意：因为不知道原作者是否支持自动读取 config.yml，
+          # 如果这一步报错说“缺 USER_ID”，我们需要再加一行代码来修改它。
+          # 先试运行！
+          python example.py
+          
+          # 5. (重要) 把生成的数据搬运出来
+          # 脚本可能会生成 collection.json，我们需要把它移到外层并改名
+          if [ -f "collection.json" ]; then
+            mv collection.json ../../images.json
+            echo "✅ 数据文件已生成并移动！"
+          else
+            echo "⚠️ 未找到 collection.json，可能脚本运行出错或没下载到图片"
+          fi
+      # --- 🐍 爬虫部分结束 ---
 
       - name: Build
         run: pnpm install && pnpm build
