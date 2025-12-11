@@ -5,6 +5,13 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # 每天北京时间早上 4 点自动运行 (可选)
+  # schedule:
+  #   - cron: '0 20 * * *'
+
+# 给机器人写入权限
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -23,7 +30,6 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-      # --- 🐍 Python 爬虫部分 ---
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -41,35 +47,31 @@ jobs:
           cd python_scripts/pixiv_collection
           pip install -r requirements.txt
           
-          # ================= 🔧 终极修复代码 =================
-          
-          # 1. 修复导入路径
+          # 修正代码
           sed -i 's/from .collection/from collection/g' example.py
-          
-          # 2. 填入 UID (33766904)
           sed -i 's/USER_ID = .*/USER_ID = 33443193/' example.py
-          
-          # 3. 让脚本直接从环境变量读取 Token (防错)
           sed -i "s/REFRESH_TOKEN = .*/import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')/" example.py
-
-          # 4. 【新增修复】 解决“第一次运行找不到文件”的报错
-          # 意思是：如果 collection.json 存在才读取，不存在就跳过
           sed -i "s/c.read_data('collection.json')/if os.path.exists('collection.json'): c.read_data('collection.json')/" example.py
           
-          # ================= 🔧 修复结束 =================
-          
-          echo "🚀 开始运行爬虫..."
+          echo "🚀 开始抓取..."
           python example.py
           
           if [ -f "collection.json" ]; then
-            mv collection.json ../../images.json
-            echo "✅ 数据生成成功！"
+            # 把它移动到仓库根目录，方便网站读取
+            mv collection.json ../../../public/images.json
+            echo "✅ 数据已生成并移动到 public 目录！"
           else
-            # 如果是第一次运行，可能脚本还没生成 json 就结束了（或者图太少）
-            # 我们手动创建一个空的 images.json 防止后面报错
-            echo "[]" > ../../images.json
-            echo "⚠️ 初次运行，手动生成了基础数据文件。"
+            echo "⚠️ 未生成数据"
+            # 就算没抓到新图，也不要让流程报错
+            exit 0
           fi
 
-      - name: Build
-        run: pnpm install && pnpm build
+      # --- ✨ 新增：把 images.json 存回 GitHub ---
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          # 如果 public/images.json 有变化，就提交
+          git add public/images.json
+          git commit -m "Auto update images.json [skip ci]" || echo "No changes to commit"
+          git push
