@@ -12,4 +12,3 @@ storage:
   enable_r2: true
   enable_local: false
 
-public_url: "https://pub-fc17da3d5482414282f212804f1cb591.r2.dev"
