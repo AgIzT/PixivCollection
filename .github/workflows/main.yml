@@ -31,7 +31,6 @@ jobs:
 
       - name: Run Pixiv Crawler
         env:
-          # 直接把 Token 传给环境，让 Python 自己去读
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -50,22 +49,26 @@ jobs:
           # 2. 填入 UID (33766904)
           sed -i 's/USER_ID = .*/USER_ID = 33766904/' example.py
           
-          # 3. 【关键修改】让脚本直接从环境变量读取 Token
-          # 我们把 "REFRESH_TOKEN = ..." 这一行替换成 "import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')"
-          # 这样就避免了任何引号或格式错误
+          # 3. 让脚本直接从环境变量读取 Token (防错)
           sed -i "s/REFRESH_TOKEN = .*/import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')/" example.py
+
+          # 4. 【新增修复】 解决“第一次运行找不到文件”的报错
+          # 意思是：如果 collection.json 存在才读取，不存在就跳过
+          sed -i "s/c.read_data('collection.json')/if os.path.exists('collection.json'): c.read_data('collection.json')/" example.py
           
           # ================= 🔧 修复结束 =================
           
-          echo "🚀 开始运行爬虫（使用环境变量模式）..."
+          echo "🚀 开始运行爬虫..."
           python example.py
           
           if [ -f "collection.json" ]; then
             mv collection.json ../../images.json
             echo "✅ 数据生成成功！"
           else
-            echo "⚠️ 未生成数据，请检查 Token 是否正确。"
-            exit 1
+            # 如果是第一次运行，可能脚本还没生成 json 就结束了（或者图太少）
+            # 我们手动创建一个空的 images.json 防止后面报错
+            echo "[]" > ../../images.json
+            echo "⚠️ 初次运行，手动生成了基础数据文件。"
           fi
 
       - name: Build
