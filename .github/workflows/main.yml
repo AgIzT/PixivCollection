@@ -5,11 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-  # 每天北京时间早上 4 点自动运行 (可选)
-  # schedule:
-  #   - cron: '0 20 * * *'
+  # 每天北京时间早上 4 点自动运行
+  schedule:
+    - cron: '0 20 * * *'
 
-# 给机器人写入权限 (把数据存回仓库)
 permissions:
   contents: write
 
@@ -47,19 +46,33 @@ jobs:
           cd python_scripts/pixiv_collection
           pip install -r requirements.txt
           
-          # 代码修正
+          # === 🔧 配置修改区 ===
           sed -i 's/from .collection/from collection/g' example.py
           sed -i 's/USER_ID = .*/USER_ID = 33443193/' example.py
           sed -i "s/REFRESH_TOKEN = .*/import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')/" example.py
+          # 修复第一次运行报错
           sed -i "s/c.read_data('collection.json')/if os.path.exists('collection.json'): c.read_data('collection.json')/" example.py
           
-          echo "🚀 开始抓取..."
+          # 👇【关键修改】只抓取 1 页 (安全防风控)
+          # 原脚本默认是 n_pages=2，我们把它改成 1
+          sed -i 's/n_pages=2/n_pages=1/g' example.py
+          
+          echo "🚀 开始安全抓取 (仅抓取第1页)..."
           python example.py
           
-          # --- 📂 路径修正部分 ---
-          # 1. 先确保 public 文件夹存在 (没有就新建)
+          # === 📂 搬运数据 ===
           mkdir -p ../../public
           
-          if [ -f "collection.json" ]; then
-            # 2. 移动文件 (修正为 ../../ 两层)
-            mv collection.json ../../
+          # 简化版搬运逻辑
+          [ -f "collection.json" ] && mv collection.json ../../public/images.json || echo "[]" > ../../public/images.json
+          
+          echo "✅ 处理完成！"
+
+      # --- ✨ 提交数据回仓库 ---
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/images.json
+          git commit -m "Auto update images.json [skip ci]" || echo "No changes to commit"
+          git push
