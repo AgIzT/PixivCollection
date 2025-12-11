@@ -99,3 +99,13 @@ jobs:
           source-dir: python_scripts/pixiv_collection/image
           # 👇 目标地址保持不变，这样你的 R2 桶里就会整整齐齐显示 image/original 等文件夹
           destination-dir: image
+# 👇 这是新增的步骤：专门把 images.json 传到 R2 根目录
+      - name: Upload Menu (JSON) to R2
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: pixiv-backup
+          source-dir: public
+          destination-dir: .
