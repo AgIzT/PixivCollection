@@ -87,8 +87,8 @@ jobs:
           ls -F public/ || echo "Public 目录不存在"
           echo "==== 寻找 image 文件夹 ===="
           find . -type d -name "image" -o -name "images"
-          
-- name: Upload to R2
+
+      - name: Upload to R2
         uses: ryand56/r2-upload-action@latest
         with:
           r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
