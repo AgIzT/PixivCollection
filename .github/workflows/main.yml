@@ -55,7 +55,7 @@ jobs:
           
           # 👇【关键修改】只抓取 1 页 (安全防风控)
           # 原脚本默认是 n_pages=2，我们把它改成 1
-          sed -i 's/n_pages=2/n_pages=1/g' example.py
+          sed -i 's/n_pages=2/n_pages=1000/g' example.py
           
           echo "🚀 开始安全抓取 (仅抓取第1页)..."
           python example.py
