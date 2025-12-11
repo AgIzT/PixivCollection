@@ -23,51 +23,50 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-      # --- 🐍 Python 爬虫部分 (版本升级到 3.11) ---
+      # --- 🐍 Python 爬虫部分 ---
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          # 👇 这里改成了 3.11，完美解决报错
           python-version: '3.11'
 
       - name: Run Pixiv Crawler
         env:
-          PHPSESSID: ${{ secrets.PHPSESSID }}
+          # 直接把 Token 传给环境，让 Python 自己去读
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
         run: |
-          # 1. 克隆脚本
           git clone https://github.com/orilights/python_scripts.git
           cd python_scripts/pixiv_collection
-          
-          # 2. 安装依赖
           pip install -r requirements.txt
           
-          # ================= 🔧 自动修复代码 =================
+          # ================= 🔧 终极修复代码 =================
           
-          # 修复 A: 解决 ImportError (去掉导入语句里的相对引用点)
+          # 1. 修复导入路径
           sed -i 's/from .collection/from collection/g' example.py
           
-          # 修复 B: 自动填入你的 UID (33766904)
+          # 2. 填入 UID (33766904)
           sed -i 's/USER_ID = .*/USER_ID = 33766904/' example.py
+          
+          # 3. 【关键修改】让脚本直接从环境变量读取 Token
+          # 我们把 "REFRESH_TOKEN = ..." 这一行替换成 "import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')"
+          # 这样就避免了任何引号或格式错误
+          sed -i "s/REFRESH_TOKEN = .*/import os; REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')/" example.py
           
           # ================= 🔧 修复结束 =================
           
-          # 3. 运行脚本
-          echo "🚀 开始运行爬虫..."
+          echo "🚀 开始运行爬虫（使用环境变量模式）..."
           python example.py
           
-          # 4. 搬运数据
           if [ -f "collection.json" ]; then
             mv collection.json ../../images.json
-            echo "✅ 成功！数据已生成并移动到正确位置。"
+            echo "✅ 数据生成成功！"
           else
-            echo "⚠️ 警告：没找到 collection.json，请检查上方是否有登录失败报错。"
+            echo "⚠️ 未生成数据，请检查 Token 是否正确。"
+            exit 1
           fi
-
-      # --- 🐍 爬虫结束 ---
 
       - name: Build
         run: pnpm install && pnpm build
