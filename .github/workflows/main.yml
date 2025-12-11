@@ -76,14 +76,26 @@ jobs:
           git add public/images.json
           git commit -m "Auto update images.json [skip ci]" || echo "No changes to commit"
           git push
-# ... (把这段代码加在原有步骤的后面)
+# ... (前面的步骤不用动)
 
+      # 👇 新增这个步骤，专门用来找文件夹！
+      - name: Check file structure
+        run: |
+          echo "==== 根目录文件 ===="
+          ls -F
+          echo "==== Public 目录文件 ===="
+          ls -F public/ || echo "Public 目录不存在"
+          echo "==== 寻找 image 文件夹 ===="
+          find . -type d -name "image" -o -name "images"
+          
+      # 👇 上传步骤先暂时改成这样（试探 public/image）
       - name: Upload to R2
         uses: ryand56/r2-upload-action@latest
+        continue-on-error: true  # 👈 关键！加上这行，就算找不到文件夹也不报错退出，让我们能看到上面的日志
         with:
           r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
           r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
           r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           r2-bucket: pixiv-backup
-          source-dir: image
+          source-dir: public/image  # 我们先试一次 public/image
           destination-dir: image
