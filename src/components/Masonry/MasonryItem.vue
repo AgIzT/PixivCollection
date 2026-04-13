@@ -39,9 +39,9 @@
     </Transition>
     <div
       v-if="config.showAIBadge && imageData.aiGenerated"
-      class="pointer-events-none absolute right-1 top-1 rounded-full bg-orange-500/90 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white shadow-sm"
+      class="pointer-events-none absolute right-1 top-1 rounded-full bg-sky-200/90 px-2 py-0.5 text-xs font-semibold tracking-wide text-sky-900 shadow-sm"
     >
-      AI
+      AI生成
     </div>
     <div
       v-if="imageCount > 1"
