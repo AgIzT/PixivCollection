@@ -82,6 +82,9 @@
         <div class="flex items-center">
           使用标签翻译<Switch v-model="masonryConfig.showTagTranslation" class="ml-3" />
         </div>
+        <div class="flex items-center">
+          显示 AI 角标<Switch v-model="masonryConfig.showAIBadge" class="ml-3" />
+        </div>
         <div class="mt-1">
           图片排序:
           <select
@@ -414,7 +417,7 @@ import {
   VERCEL_GIT_COMMIT_SHA,
 } from '@/config'
 import { useStore } from '@/store'
-import { exportFile, formatTime } from '@/utils'
+import { exportFile, formatTime, normalizeImages } from '@/utils'
 
 const store = useStore()
 const {
@@ -630,7 +633,7 @@ function loadDataFromFile() {
       const reader = new FileReader()
       reader.onload = (e) => {
         const data = JSON.parse(e.target?.result as string)
-        store.images = data
+        store.images = normalizeImages(data)
       }
       reader.readAsText(file)
     }

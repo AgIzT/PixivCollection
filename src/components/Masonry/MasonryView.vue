@@ -122,6 +122,7 @@ const itemConfig = computed(() => ({
   infoAtBottom: masonryConfig.value.infoAtBottom,
   tagIncludeBookmark: filterConfig.value.tag.includeBookmark,
   tagTranslation: masonryConfig.value.showTagTranslation,
+  showAIBadge: masonryConfig.value.showAIBadge,
   shadow: masonryConfig.value.showShadow,
   border: masonryConfig.value.gap > 2,
 }))

@@ -1,6 +1,14 @@
 import { IMAGE_FILENAME, IMAGE_FORMAT_PREVIEW, IMAGE_FORMAT_THUMBNAIL, IMAGE_PATH_ORIGINAL, IMAGE_PATH_PREVIEW, IMAGE_PATH_THUMBNAIL, LINK_PIXIV_ARTWORK, LINK_PIXIV_USER, ONLINE_MODE, ONLINE_PXIMG } from '@/config'
 import { ImageType } from '@/types'
 
+const AI_TAG_ALIASES = new Set([
+  'ai',
+  'ai-assisted',
+  'aiイラスト',
+  'ai生成',
+  'ai画作',
+])
+
 export function formatBytes(bytes: number) {
   if (bytes === 0)
     return '0 B'
@@ -84,8 +92,23 @@ export function copyToClipboard(content: string | number) {
   navigator.clipboard.writeText(String(content))
 }
 
-export function transformData(illusts: any): any[] {
-  const result = []
+function normalizeTagText(text: string | null | undefined) {
+  return (text || '').trim().toLowerCase().replace(/\s+/g, '')
+}
+
+export function isAIArtwork(tags: Tag[]) {
+  return tags.some(tag => AI_TAG_ALIASES.has(normalizeTagText(tag.name)) || AI_TAG_ALIASES.has(normalizeTagText(tag.translated_name)))
+}
+
+export function normalizeImages(images: Image[]): Image[] {
+  return images.map(image => ({
+    ...image,
+    aiGenerated: isAIArtwork(image.tags),
+  }))
+}
+
+export function transformData(illusts: any): Image[] {
+  const result: Image[] = []
   for (const data of illusts) {
     if (data.page_count > 1) {
       for (let i = 0; i < data.page_count; i++) {
@@ -106,6 +129,7 @@ export function transformData(illusts: any): any[] {
           x_restrict: data.x_restrict,
           bookmark: data.total_bookmarks,
           view: data.total_view,
+          aiGenerated: false,
           dominant_color: '#FFF',
           link: {
             thumbnail: data.meta_pages[i].image_urls.medium,
@@ -133,6 +157,7 @@ export function transformData(illusts: any): any[] {
         x_restrict: data.x_restrict,
         bookmark: data.total_bookmarks,
         view: data.total_view,
+        aiGenerated: false,
         dominant_color: '#FFF',
         link: {
           thumbnail: data.image_urls.medium,
@@ -142,5 +167,5 @@ export function transformData(illusts: any): any[] {
       })
     }
   }
-  return result
+  return normalizeImages(result)
 }

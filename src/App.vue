@@ -34,7 +34,7 @@ import {
 } from 'overlayscrollbars'
 import { DATA_FILE, ONLINE_MODE } from '@/config'
 import { useStore } from '@/store'
-import { formatBytes } from '@/utils'
+import { formatBytes, normalizeImages } from '@/utils'
 
 const store = useStore()
 
@@ -102,7 +102,7 @@ async function fetchData() {
 
     const result = new TextDecoder('utf-8').decode(chunksAll)
 
-    store.images = JSON.parse(result)
+    store.images = normalizeImages(JSON.parse(result))
     store.sortImages()
   }
   catch (e) {

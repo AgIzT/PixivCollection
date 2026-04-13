@@ -37,6 +37,7 @@ export const useStore = defineStore('main', {
       mergeSameIdImage: true,
       infoAtBottom: false,
       showTagTranslation: true,
+      showAIBadge: true,
       imageSortBy: 'default' as 'default' | 'id_desc' | 'id_asc' | 'bookmark_desc',
       virtualListEnable: true,
       showShadow: false,

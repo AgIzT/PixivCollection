@@ -38,8 +38,15 @@
       />
     </Transition>
     <div
+      v-if="config.showAIBadge && imageData.aiGenerated"
+      class="pointer-events-none absolute right-1 top-1 rounded-full bg-orange-500/90 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white shadow-sm"
+    >
+      AI
+    </div>
+    <div
       v-if="imageCount > 1"
-      class="absolute right-1 top-1 flex items-center rounded-full bg-black/50 px-2 py-0.5 text-sm text-white"
+      class="absolute right-1 flex items-center rounded-full bg-black/50 px-2 py-0.5 text-sm text-white"
+      :class="config.showAIBadge && imageData.aiGenerated ? 'top-9' : 'top-1'"
     >
       <IconStack class="mr-1 size-3" />
       {{ imageCount }}

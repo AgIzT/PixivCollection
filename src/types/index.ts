@@ -19,6 +19,7 @@ declare global {
     dominant_color: string
     bookmark: number
     view: number
+    aiGenerated: boolean
     link?: {
       thumbnail: string
       preview: string
@@ -45,6 +46,7 @@ declare global {
     infoAtBottom: boolean
     tagIncludeBookmark: boolean
     tagTranslation: boolean
+    showAIBadge: boolean
     shadow: boolean
     border: boolean
   }
