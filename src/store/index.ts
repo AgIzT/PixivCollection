@@ -9,8 +9,18 @@ export const useStore = defineStore('main', {
     showSidebar: false,
     showNav: true,
 
-    loading: true,
+    loadState: 'loading' as LoadState,
+    loadingMore: false,
+    loadErrorType: null as LoadErrorType,
+    loadErrorMessage: '',
     max_bookmark_id: 0,
+    dataMeta: {
+      updatedAt: '',
+      imageCount: 0,
+    },
+    viewState: {
+      scrollTop: 0,
+    },
 
     images: <Image[]>[],
     imagesLoaded: new Set(),
@@ -106,6 +116,9 @@ export const useStore = defineStore('main', {
     },
     scrollbarTheme(): string {
       return `os-theme-${this.colorScheme === 'dark' ? 'light' : 'dark'}`
+    },
+    totalIllustCount(): number {
+      return new Set(this.images.map(image => image.id)).size
     },
     imageFilter() {
       return (image: Image) => {
@@ -220,26 +233,107 @@ export const useStore = defineStore('main', {
     imagesFiltered(): Image[] {
       return this.images.filter(this.imageFilter)
     },
+    filteredIllustCount(): number {
+      return new Set(this.imagesFiltered.map(image => image.id)).size
+    },
+    currentIndexDisplay(): number {
+      return this.imageViewer.index >= 0 ? this.imageViewer.index + 1 : 0
+    },
+    currentTotalDisplay(): number {
+      return this.imagesFiltered.length
+    },
+    r18ModeLabel(): string {
+      switch (this.filterConfig.restrict.r18) {
+        case 'show':
+          return 'R18显示'
+        case 'only':
+          return '仅看R18'
+        default:
+          return 'R18隐藏'
+      }
+    },
+    aiModeLabel(): string {
+      return this.filterConfig.ai.enable ? '显示AI作品' : '已排除AI作品'
+    },
   },
   actions: {
-    async fetchFromAPI() {
-      this.loading = true
+    applyLoadedImages(images: Image[], updatedAt = '') {
+      this.images = images
+      this.sortImages()
+      this.dataMeta.imageCount = images.length
+      if (updatedAt)
+        this.dataMeta.updatedAt = updatedAt
+      this.loadErrorType = null
+      this.loadErrorMessage = ''
+      this.loadState = images.length ? 'ready' : 'empty'
+      if (this.filterConfig.search.enable)
+        this.ensureSearchIndex()
+    },
+    setLoadError(type: LoadErrorType, message: string) {
+      this.loadErrorType = type
+      this.loadErrorMessage = message
+      this.loadState = 'error'
+    },
+    ensureSearchIndex() {
+      this.images.forEach((image) => {
+        if (image.searchStr === undefined) {
+          image.searchStr = (
+            image.id
+            + image.title
+            + image.author.id
+            + image.author.name
+            + image.tags
+              .map(
+                tag => tag.translated_name
+                  ? tag.name + tag.translated_name
+                  : tag.name,
+              )
+              .join()
+          ).toLowerCase()
+        }
+      })
+    },
+    async fetchFromAPI(reset = false) {
+      if (reset) {
+        this.images = []
+        this.max_bookmark_id = 0
+        this.loadState = 'loading'
+        this.loadErrorType = null
+        this.loadErrorMessage = ''
+      }
+      else if (!this.images.length) {
+        this.loadState = 'loading'
+      }
+      else {
+        this.loadingMore = true
+      }
       try {
         const response = await fetch(`${ONLINE_API}?id=${ONLINE_USER_ID}&max_bookmark_id=${this.max_bookmark_id}`)
+        if (!response.ok)
+          throw new Error(`Request failed with ${response.status}`)
         const data = await response.json()
         this.images = [...this.images, ...transformData(data.illusts)]
         this.max_bookmark_id = Number.parseInt(data.next_url.split('max_bookmark_id=')[1])
         this.sortImages()
+        if (this.filterConfig.search.enable)
+          this.ensureSearchIndex()
+        this.dataMeta.imageCount = this.images.length
+        this.dataMeta.updatedAt = response.headers.get('Last-Modified') || response.headers.get('Date') || this.dataMeta.updatedAt
+        this.loadErrorType = null
+        this.loadErrorMessage = ''
+        this.loadState = this.images.length ? 'ready' : 'empty'
       }
       catch (e) {
         console.error(e)
+        if (!this.images.length)
+          this.setLoadError('metadata', '元数据加载失败，请稍后重试。')
       }
       finally {
-        this.loading = false
+        this.loadingMore = false
       }
     },
     loadMore() {
-      if (this.loading)
+      if (this.loadingMore || this.loadState === 'loading')
         return
 
       this.fetchFromAPI()
@@ -281,23 +375,7 @@ export const useStore = defineStore('main', {
         this.updateSeatchValue('')
       }
       else {
-        this.images.forEach((image) => {
-          if (image.searchStr === undefined) {
-            image.searchStr = (
-              image.id
-              + image.title
-              + image.author.id
-              + image.author.name
-              + image.tags
-                .map(
-                  tag => tag.translated_name
-                    ? tag.name + tag.translated_name
-                    : tag.name,
-                )
-                .join()
-            ).toLowerCase()
-          }
-        })
+        this.ensureSearchIndex()
       }
       this.filterConfig.search.enable = !this.filterConfig.search.enable
     },

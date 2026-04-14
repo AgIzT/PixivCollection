@@ -111,6 +111,19 @@
       <SidebarBlock>
         已选项
         <br>
+        <span class="m-0.5 inline-block rounded-sm bg-violet-300/20 px-0.5 text-sm">
+          {{ store.r18ModeLabel }}
+        </span>
+        <span class="m-0.5 inline-block rounded-sm bg-sky-300/20 px-0.5 text-sm">
+          {{ store.aiModeLabel }}
+        </span>
+        <button
+          v-if="filterConfig.size.enable"
+          class="m-0.5 rounded-sm bg-cyan-300/20 px-0.5 text-sm"
+          @click="filterConfig.size.enable = false"
+        >
+          {{ sizeSummaryLabel }}
+        </button>
         <button
           v-if="filterConfig.year.enable"
           class="m-0.5 rounded-sm bg-yellow-300/20 px-0.5 text-sm"
@@ -128,6 +141,7 @@
         <button
           v-if="filterConfig.author.enable"
           class="m-0.5 rounded-sm bg-blue-500/20 px-0.5 text-sm"
+          :title="selectedAuthorLabel"
           @click="handleClickAuthor(filterConfig.author.id)"
         >
           {{ `作者：${filterConfig.author.id}` }}
@@ -450,6 +464,15 @@ const searchTag = ref('')
 const illustCount = computed(() => new Set(images.value.map(i => i.id)).size)
 const authorCount = computed(() => new Set(images.value.map(i => i.author.id)).size)
 const tagCount = computed(() => new Set(images.value.flatMap(i => i.tags.map(t => t.name))).size)
+const selectedAuthorLabel = computed(() => {
+  const author = authors.value.find(item => item.id === filterConfig.value.author.id)
+  return `作者：${author?.name || filterConfig.value.author.id}`
+})
+const sizeSummaryLabel = computed(() => {
+  const width = filterConfig.value.size.width
+  const height = filterConfig.value.size.height
+  return `尺寸：W ${width.min ?? '-'}-${width.max ?? '-'} / H ${height.min ?? '-'}-${height.max ?? '-'}`
+})
 
 const filteredAuthors = computed(() => {
   if (searchAuthor.value !== '') {
@@ -638,7 +661,7 @@ function loadDataFromFile() {
       const reader = new FileReader()
       reader.onload = (e) => {
         const data = JSON.parse(e.target?.result as string)
-        store.images = normalizeImages(data)
+        store.applyLoadedImages(normalizeImages(data))
       }
       reader.readAsText(file)
     }

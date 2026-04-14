@@ -50,6 +50,8 @@ declare global {
     shadow: boolean
     border: boolean
   }
+  type LoadState = 'loading' | 'ready' | 'empty' | 'error'
+  type LoadErrorType = 'metadata' | 'image' | null
 }
 
 export {}

@@ -5,6 +5,12 @@
       class="fixed left-0 top-0 h-screen w-full bg-black/50 backdrop-blur-lg"
       @wheel.prevent="handleWheelScroll"
     >
+      <div
+        v-if="imageViewer.info"
+        class="pointer-events-none absolute left-1/2 top-3 z-50 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 text-sm text-white backdrop-blur-sm"
+      >
+        {{ store.currentIndexDisplay }} / {{ store.currentTotalDisplay }}
+      </div>
       <div class="absolute left-2 top-2 z-50 flex gap-2">
         <div class="flex flex-col gap-2">
           <button
@@ -96,6 +102,11 @@
       >
         <IconRight class="mx-auto size-6 translate-x-0.5 stroke-2" />
       </button>
+      <div
+        class="pointer-events-none absolute bottom-3 left-1/2 z-50 hidden -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 text-xs text-white/90 backdrop-blur sm:block"
+      >
+        ← 上一张 / → 下一张 / Esc 关闭
+      </div>
       <div class="relative">
         <div
           class="absolute max-w-none cursor-grab touch-none select-none active:cursor-grabbing"
@@ -111,6 +122,7 @@
           }"
           @mousedown.prevent="handleMouseDragStart"
           @touchstart.prevent="handleTouchStart"
+          @dblclick.prevent="handleDoubleClickZoom"
         >
           <img v-show="loadingImage" class="absolute left-0 top-0 z-0 size-full" :src="thumbnailSrc">
           <img :src="imageSrc" class="absolute left-0 top-0 z-10 size-full">
@@ -351,6 +363,14 @@ function handleZoom(newRatio: number, centerPostiion: { x: number, y: number }, 
   }
 
   imageRatio.value = newRatio
+}
+
+function handleDoubleClickZoom() {
+  const targetRatio = Math.abs(imageRatio.value - initialRatio) < 0.05 ? 1 : initialRatio
+  handleZoom(targetRatio, {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  })
 }
 
 function downloadImage() {

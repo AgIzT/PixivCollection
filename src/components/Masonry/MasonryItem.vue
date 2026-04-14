@@ -14,17 +14,31 @@
     >
       <Transition name="fade-slow">
         <div
-          v-show="!imageLoaded"
+          v-show="!imageLoaded || imageError"
           class="absolute size-full"
           :style="{
             backgroundColor: imageData.dominant_color,
           }"
         />
       </Transition>
+      <div
+        v-if="imageError"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/45 px-3 text-center text-sm text-white"
+      >
+        <span>图片加载失败</span>
+        <button
+          class="rounded-full bg-white/20 px-3 py-1 text-xs transition-colors hover:bg-white/30"
+          @click.stop="retryImage"
+        >
+          点击重试
+        </button>
+      </div>
       <img
+        v-show="!imageError"
         class="w-full cursor-pointer"
         :src="imageSrc"
         @load="handleImageLoaded"
+        @error="handleImageError"
         @click="useStore().viewImage(imageIndex)"
       >
     </div>
@@ -83,11 +97,15 @@ let timer: NodeJS.Timeout | null = null
 
 const imageLoad = ref(false)
 const imageLoaded = ref(false)
+const imageError = ref(false)
+const imageRetry = ref(0)
 
 const imageIdxStr = `${props.imageData.id * 100 + props.imageData.part}`
 
 const imageSrc = computed(() =>
-  imageLoad.value ? getImageUrl(props.imageData, ImageType.Thumbnail) : '',
+  imageLoad.value
+    ? `${getImageUrl(props.imageData, ImageType.Thumbnail)}${imageRetry.value ? `?retry=${imageRetry.value}` : ''}`
+    : '',
 )
 
 onMounted(() => {
@@ -107,7 +125,18 @@ onUnmounted(() => {
 })
 
 function handleImageLoaded() {
+  imageError.value = false
   imageLoaded.value = true
   useStore().imagesLoaded.add(imageIdxStr)
+}
+
+function handleImageError() {
+  imageError.value = true
+}
+
+function retryImage() {
+  imageError.value = false
+  imageLoaded.value = false
+  imageRetry.value += 1
 }
 </script>
