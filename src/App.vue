@@ -76,8 +76,6 @@ const {
 const receivedLength = ref(0)
 const contentLength = ref(0)
 const scrollRestored = ref(false)
-const DATA_FETCH_TIMEOUT = 30000
-const STREAM_STALL_TIMEOUT = 4000
 
 let osInstance: OverlayScrollbars | null = null
 
@@ -144,22 +142,30 @@ async function fetchData() {
   store.loadErrorMessage = ''
   receivedLength.value = 0
   contentLength.value = 0
-
-  const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), DATA_FETCH_TIMEOUT)
-
   try {
-    const response = await fetch(DATA_FILE, {
-      cache: 'no-store',
-      signal: controller.signal,
-    })
+    const response = await fetch(DATA_FILE)
     if (!response.ok)
       throw new Error(`Request failed with ${response.status}`)
-
+    const reader = (response.body as ReadableStream<Uint8Array>).getReader()
     const updatedAt = response.headers.get('Last-Modified') || response.headers.get('Date') || ''
     contentLength.value = +(response.headers.get('Content-Length') || 0)
+    const chunks = []
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done)
+        break
+      chunks.push(value)
+      receivedLength.value += value.length
+    }
 
-    const result = await readResponseText(response)
+    const chunksAll = new Uint8Array(receivedLength.value)
+    let position = 0
+    for (const chunk of chunks) {
+      chunksAll.set(chunk, position)
+      position += chunk.length
+    }
+
+    const result = new TextDecoder('utf-8').decode(chunksAll)
 
     store.applyLoadedImages(normalizeImages(JSON.parse(result)), updatedAt)
   }
@@ -167,67 +173,6 @@ async function fetchData() {
     console.error(e)
     store.setLoadError('metadata', '元数据加载失败，请检查网络或数据文件后重试。')
   }
-  finally {
-    window.clearTimeout(timeoutId)
-  }
-}
-
-async function readResponseText(response: Response) {
-  const fallbackResponse = response.clone()
-
-  if (!response.body) {
-    const text = await fallbackResponse.text()
-    updateReceivedLength(text)
-    return text
-  }
-
-  const reader = response.body.getReader()
-  const chunks: Uint8Array[] = []
-
-  try {
-    while (true) {
-      const readResult = await Promise.race([
-        reader.read(),
-        new Promise<{ stalled: true }>(resolve =>
-          window.setTimeout(() => resolve({ stalled: true }), STREAM_STALL_TIMEOUT),
-        ),
-      ])
-
-      if ('stalled' in readResult) {
-        reader.cancel().catch(() => {})
-        const text = await fallbackResponse.text()
-        updateReceivedLength(text)
-        return text
-      }
-
-      const { done, value } = readResult
-      if (done)
-        break
-
-      chunks.push(value)
-      receivedLength.value += value.length
-    }
-  }
-  catch {
-    const text = await fallbackResponse.text()
-    updateReceivedLength(text)
-    return text
-  }
-
-  const chunksAll = new Uint8Array(receivedLength.value)
-  let position = 0
-  for (const chunk of chunks) {
-    chunksAll.set(chunk, position)
-    position += chunk.length
-  }
-
-  return new TextDecoder('utf-8').decode(chunksAll)
-}
-
-function updateReceivedLength(text: string) {
-  receivedLength.value = new TextEncoder().encode(text).length
-  if (!contentLength.value)
-    contentLength.value = receivedLength.value
 }
 
 async function loadData() {
