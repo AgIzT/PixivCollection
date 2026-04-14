@@ -247,6 +247,11 @@
         </div>
       </SidebarBlock>
       <SidebarBlock>
+        <div class="flex items-center">
+          AI生成作品<Switch v-model="filterConfig.ai.enable" class="ml-3" />
+        </div>
+      </SidebarBlock>
+      <SidebarBlock>
         <div>
           作者
           <TextBox v-model.trim="searchAuthor" placeholder="搜索作者" />

@@ -31,8 +31,8 @@ export const useStore = defineStore('main', {
     },
     masonryConfig: {
       col: -1,
-      gap: 20,
-      imageMinWidth: 240,
+      gap: 10,
+      imageMinWidth: 280,
       containerFullWidth: true,
       mergeSameIdImage: true,
       infoAtBottom: false,
@@ -40,7 +40,7 @@ export const useStore = defineStore('main', {
       showAIBadge: true,
       imageSortBy: 'default' as 'default' | 'id_desc' | 'id_asc' | 'bookmark_desc',
       virtualListEnable: true,
-      showShadow: false,
+      showShadow: true,
     },
     filterConfig: {
       search: {
@@ -70,12 +70,15 @@ export const useStore = defineStore('main', {
         width: { max: null, min: null },
         height: { max: null, min: null },
       },
+      ai: {
+        enable: true,
+      },
       bookmark: {
         enable: false,
         min: 0,
       },
       restrict: {
-        maxSanityLevel: 2,
+        maxSanityLevel: 6,
         r18: 'hidden' as 'hidden' | 'show' | 'only',
       },
     },
@@ -120,6 +123,8 @@ export const useStore = defineStore('main', {
             return false
         }
         // 搜索
+        if (!this.filterConfig.ai.enable && image.aiGenerated)
+          return false
         if (this.filterConfig.search.enable) {
           if (this.filterConfig.search.value.trim() !== '' && image.searchStr !== undefined) {
             if (!image.searchStr.includes(this.filterConfig.search.value.trim().toLowerCase()))
