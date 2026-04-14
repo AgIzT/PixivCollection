@@ -94,16 +94,11 @@ const props = defineProps<{
 }>()
 
 let timer: NodeJS.Timeout | null = null
-let retryTimer: NodeJS.Timeout | null = null
-
-const MAX_AUTO_RETRIES = 2
-const AUTO_RETRY_DELAY = 500
 
 const imageLoad = ref(false)
 const imageLoaded = ref(false)
 const imageError = ref(false)
 const imageRetry = ref(0)
-const autoRetryCount = ref(0)
 
 const imageIdxStr = `${props.imageData.id * 100 + props.imageData.part}`
 
@@ -127,38 +122,21 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer)
     clearTimeout(timer)
-  if (retryTimer)
-    clearTimeout(retryTimer)
 })
 
 function handleImageLoaded() {
   imageError.value = false
   imageLoaded.value = true
-  autoRetryCount.value = 0
   useStore().imagesLoaded.add(imageIdxStr)
 }
 
 function handleImageError() {
-  imageLoaded.value = false
-  if (autoRetryCount.value < MAX_AUTO_RETRIES) {
-    if (retryTimer)
-      clearTimeout(retryTimer)
-    retryTimer = setTimeout(() => {
-      autoRetryCount.value += 1
-      imageRetry.value += 1
-      retryTimer = null
-    }, AUTO_RETRY_DELAY)
-    return
-  }
   imageError.value = true
 }
 
 function retryImage() {
   imageError.value = false
   imageLoaded.value = false
-  autoRetryCount.value = 0
-  if (retryTimer)
-    clearTimeout(retryTimer)
   imageRetry.value += 1
 }
 </script>

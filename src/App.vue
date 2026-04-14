@@ -77,6 +77,7 @@ const receivedLength = ref(0)
 const contentLength = ref(0)
 const scrollRestored = ref(false)
 const DATA_FETCH_TIMEOUT = 30000
+const STREAM_STALL_TIMEOUT = 4000
 
 let osInstance: OverlayScrollbars | null = null
 
@@ -149,6 +150,7 @@ async function fetchData() {
 
   try {
     const response = await fetch(DATA_FILE, {
+      cache: 'no-store',
       signal: controller.signal,
     })
     if (!response.ok)
@@ -157,8 +159,7 @@ async function fetchData() {
     const updatedAt = response.headers.get('Last-Modified') || response.headers.get('Date') || ''
     contentLength.value = +(response.headers.get('Content-Length') || 0)
 
-    const result = await response.text()
-    updateReceivedLength(result)
+    const result = await readResponseText(response)
 
     store.applyLoadedImages(normalizeImages(JSON.parse(result)), updatedAt)
   }
@@ -169,6 +170,58 @@ async function fetchData() {
   finally {
     window.clearTimeout(timeoutId)
   }
+}
+
+async function readResponseText(response: Response) {
+  const fallbackResponse = response.clone()
+
+  if (!response.body) {
+    const text = await fallbackResponse.text()
+    updateReceivedLength(text)
+    return text
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+
+  try {
+    while (true) {
+      const readResult = await Promise.race([
+        reader.read(),
+        new Promise<{ stalled: true }>(resolve =>
+          window.setTimeout(() => resolve({ stalled: true }), STREAM_STALL_TIMEOUT),
+        ),
+      ])
+
+      if ('stalled' in readResult) {
+        reader.cancel().catch(() => {})
+        const text = await fallbackResponse.text()
+        updateReceivedLength(text)
+        return text
+      }
+
+      const { done, value } = readResult
+      if (done)
+        break
+
+      chunks.push(value)
+      receivedLength.value += value.length
+    }
+  }
+  catch {
+    const text = await fallbackResponse.text()
+    updateReceivedLength(text)
+    return text
+  }
+
+  const chunksAll = new Uint8Array(receivedLength.value)
+  let position = 0
+  for (const chunk of chunks) {
+    chunksAll.set(chunk, position)
+    position += chunk.length
+  }
+
+  return new TextDecoder('utf-8').decode(chunksAll)
 }
 
 function updateReceivedLength(text: string) {
