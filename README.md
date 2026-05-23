@@ -1,78 +1,145 @@
-<h1 align="center"><span style="color: #0398fa;">Pixiv</span>Collection</h1>
+# PixivCollection 增强版
+
+本仓库基于上游项目 [orilights/PixivCollection](https://github.com/orilights/PixivCollection) 继续增强，核心仍然是“将个人 Pixiv 收藏夹数据部署成静态图库”的单页应用。
+
+与上游相比，本版本重点增强了浏览体验、AI 作品识别、相似图片发现和收藏数据统计。最近三阶段升级已经全部合入 `main`。
 
 ![preview](docs/screenshot.jpg)
 
-## 简介
+## 与上游的主要区别
 
-[示例站点](https://pixivcollection.pages.dev/)
+### 1. AI 作品识别与外显
 
-将个人的P站收藏夹数据爬取到本地并部署为在线网站
+- 数据加载时会根据标签自动识别 AI 作品，并写入 `aiGenerated` 字段。
+- 侧栏新增 AI 作品筛选开关，可选择是否显示 AI 生成作品。
+- 瀑布流卡片支持 AI 角标，方便在浏览时直接识别。
+- 上传本地 JSON 或在线模式加载数据时都会进行同样的 AI 标记归一化。
 
-无后端设计，图片数据一次性全部加载，图片较多时可能需要较长的时间
+### 2. 阶段一：视觉润色
 
-（测试）支持基于 [HibiAPI](https://github.com/mixmoe/HibiAPI) 的在线模式 [Demo](https://pixiv-collection-online.vercel.app/)
+- 瀑布流图片加载占位不再只是纯色块，而是基于 `dominant_color` 生成模糊渐变背景。
+- 图片未加载完成时增加 shimmer 扫光动画，让等待状态更自然。
+- 缩略图加载完成后继续使用淡入淡出过渡，避免突兀切换。
+- 滚动中新进入视口的卡片增加轻量 fade-up 入场动画。
+- 首屏内容不会整体弹入，动画主要作用于后续进入视口的卡片。
 
-## 功能
+### 3. 阶段二：浏览增强
 
-- 图片浏览
-  - 瀑布流布局，可自定义瀑布流列数与间隔
-  - 简易的图片浏览器，支持PC端和移动端的图片缩放与拖动
-- 图片筛选
-  - 通过发布年份、形状、尺寸、不健全度、R18、作者、标签、收藏数筛选图片
-- 图片搜索
-  - 通过图片id、图片标题、作者id、作者昵称、标签、标签翻译搜索图片
-- AI标签
-- 夜间模式
-- 全屏模式
-- 在线模式（测试）
-  - 使用 [HibiAPI](https://github.com/mixmoe/HibiAPI) 获取数据，需要配置 `VITE_ONLINE` 开头的相关环境变量
+- 侧栏“图片排序”新增 **色相排序**。
+- 色相排序会把 `dominant_color` 转成 HSL，按 hue / saturation / lightness 排列图片，形成更接近颜色墙的浏览体验。
+- 图片查看器底部新增 **相似图片推荐条**。
+- 推荐逻辑基于共享标签，不依赖机器学习；同作者会获得额外权重。
+- 推荐会排除 `users入り` 这类泛标签，减少无效匹配。
+- 拖动或缩放主图时，推荐条会自动隐藏，避免遮挡操作。
 
-## 部署
+### 4. 阶段三：统计仪表盘
 
-1.构建前端
+- 新增基于 Chart.js 的统计面板，可从顶部导航栏或侧栏打开。
+- 图表数据基于当前筛选结果 `imagesFiltered`，因此筛选后统计会同步变化。
+- 当前包含 5 个图表：
+  - 收藏时间线：按月份统计收藏作品数量。
+  - Top 作者：展示收藏数量最高的作者。
+  - Top 标签：展示出现频率最高的标签，并排除泛标签。
+  - 收藏数分布：按收藏数区间统计图片数量。
+  - 图片尺寸散点：按宽高散点展示图片尺寸，并区分横向、竖向、方形。
+- 统计面板支持暗色模式、关闭按钮和 `Esc` 关闭。
 
-> [!NOTE]
-> 构建前端需要安装 NodeJS 环境及 PNPM 包管理器
+## 原上游保留能力
+
+- 静态 SPA，无后端依赖。
+- 默认从 `images.json` 加载收藏数据。
+- 支持瀑布流布局，可调整列数、间距、最小图片宽度。
+- 支持虚拟列表，适合较大规模图片集合。
+- 支持图片查看器，包括鼠标/触控缩放、拖动、上一张/下一张。
+- 支持按年份、形状、尺寸、不健全度、R18、作者、标签、收藏数筛选。
+- 支持按图片 ID、标题、作者、标签和标签翻译搜索。
+- 支持夜间模式、全屏模式。
+- 支持基于 HibiAPI 的在线模式。
+
+## 使用方式
+
+安装依赖：
 
 ```bash
-# 安装依赖
 pnpm i
+```
 
-# 构建前端
+本地开发：
+
+```bash
+pnpm dev
+```
+
+生产构建：
+
+```bash
 pnpm build
 ```
 
-构建后的前端文件位于 `dist` 目录下，将其上传至服务器即可
+构建后的静态文件位于 `dist/`。部署时将 `dist/` 上传到静态服务器即可。
 
-2.爬取数据
+## 数据文件
 
-[数据爬取脚本及使用](https://github.com/orilights/python_scripts/tree/main/pixiv_collection)
+默认读取项目根路径下的 `images.json`。图片文件默认路径如下：
 
-使用上述脚本将收藏夹图片和图片信息爬取到本地
+- 原图：`./image/original/`
+- 预览图：`./image/preview/`
+- 缩略图：`./image/thumbnail/`
 
-3.上传数据
+图片文件名默认格式为：
 
-将脚本生成的 `images.json` 上传至服务器 `./` 目录
+```text
+{id}_p{part}.{ext}
+```
 
-(可选) 将爬取到的原图上传至服务器 `./image/original` 目录
+数据爬取脚本仍可参考上游作者的工具：
 
-将脚本生成的预览图上传至服务器 `./image/preview` 目录
-
-将脚本生成的缩略图上传至服务器 `./image/thumbnail` 目录
+[orilights/python_scripts - pixiv_collection](https://github.com/orilights/python_scripts/tree/main/pixiv_collection)
 
 ## 可用环境变量
 
-- `VITE_DATA_FILE`: 数据文件路径，默认为 `images.json`
-- `VITE_IMAGE_PATH_ORIGINAL`: 图片原图路径，默认为 `./image/original`
-- `VITE_IMAGE_PATH_PREVIEW`: 图片预览图路径，默认为 `./image/preview`
-- `VITE_IMAGE_PATH_THUMBNAIL`: 图片缩略图路径，默认为 `./image/thumbnail`
-- `VITE_IMAGE_FILENAME`: 图片名称格式，默认为 `{id}_p{part}.{ext}`
-- `VITE_IMAGE_FORMAT_PREVIEW`: 图片预览图格式，默认为 `webp`，设置为 `<ext>` 时为与原图相同格式
-- `VITE_IMAGE_FORMAT_THUMBNAIL`: 图片缩略图格式，默认为 `webp`，设置为 `<ext>` 时为与原图相同格式
-- `VITE_IMAGE_ALLOW_DOWNLOAD_ORIGINAL`: 是否允许下载原图，默认为 `true`
-- `VITE_MASONRY_LOAD_DELAY`: 瀑布流图片加载延迟，单位毫秒，默认为 `300`
-- `VITE_ONLINE_MODE`: 开启在线模式，默认为 `false`
-- `VITE_ONLINE_API`: HibiAPI Pixiv 收藏夹接口，默认为空
-- `VITE_ONLINE_USER_ID`: Pixiv 用户 ID，默认为空
-- `VITE_ONLINE_PXIMG`: Pixiv 图片代理，默认为 `pximg.orilight.top`
-- `INJECT_HEAD`: Head 标签末尾插入内容，默认为空，可用于插入统计代码
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `VITE_DATA_FILE` | `./images.json` | 数据文件路径 |
+| `VITE_IMAGE_PATH_ORIGINAL` | `./image/original/` | 原图目录 |
+| `VITE_IMAGE_PATH_PREVIEW` | `./image/preview/` | 预览图目录 |
+| `VITE_IMAGE_PATH_THUMBNAIL` | `./image/thumbnail/` | 缩略图目录 |
+| `VITE_IMAGE_FILENAME` | `{id}_p{part}.{ext}` | 图片文件名格式 |
+| `VITE_IMAGE_FORMAT_PREVIEW` | `webp` | 预览图格式，设置为 `<ext>` 时使用原图格式 |
+| `VITE_IMAGE_FORMAT_THUMBNAIL` | `webp` | 缩略图格式，设置为 `<ext>` 时使用原图格式 |
+| `VITE_IMAGE_ALLOW_DOWNLOAD_ORIGINAL` | `true` | 是否允许下载原图 |
+| `VITE_MASONRY_LOAD_DELAY` | `300` | 瀑布流图片加载延迟，单位毫秒 |
+| `VITE_ONLINE_MODE` | `false` | 是否开启在线模式 |
+| `VITE_ONLINE_API` | 空 | HibiAPI Pixiv 收藏夹接口 |
+| `VITE_ONLINE_USER_ID` | 空 | Pixiv 用户 ID |
+| `VITE_ONLINE_PXIMG` | `pximg.orilight.top` | Pixiv 图片代理 |
+| `INJECT_HEAD` | 空 | 构建时插入到 HTML head 末尾的内容 |
+
+## 技术栈变化
+
+上游主要技术栈保持不变：
+
+- Vue 3 + TypeScript
+- Pinia
+- Tailwind CSS
+- Vite
+- OverlayScrollbars
+- `@orilight/vue-settings`
+
+本版本新增：
+
+- `chart.js`：用于统计仪表盘图表渲染。
+
+## 待审查技术债
+
+以下三点不影响当前功能，但建议后续集中优化：
+
+1. `MasonryItem.vue` 里的 `normalizeHexColor` / `hexToRgb` 等颜色工具函数和 `utils/index.ts` 中已有颜色工具存在重复，后续可以统一迁移到 `utils`。
+2. `StatsPanel` 的图表更新目前采用 `destroy + new Chart`，可以改成更新 `chart.data` 后调用 `chart.update()`，以获得更平滑的过渡动画并减少重建成本。
+3. `MasonryItem` 的 `will-change: opacity, transform` 在动画结束后仍保留，图片数量很大时可能占用额外 GPU 内存；可以在动画完成后移除该提示。
+
+## 验证状态
+
+- 三阶段功能均已合入 `main`。
+- `pnpm build` 已通过。
+- `pnpm lint` 当前会因项目 ESLint 配置引用未安装的 `@eslint/eslintrc` 而提前失败，这属于现有配置问题，尚未在本次 README 更新中处理。
