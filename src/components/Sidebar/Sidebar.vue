@@ -101,6 +101,9 @@
             <option value="bookmark_desc">
               收藏数降序
             </option>
+            <option value="color_hue">
+              色相排序
+            </option>
             <option value="default">
               不排序
             </option>

@@ -42,6 +42,13 @@ declare global {
     account: string
     count: number
   }
+  interface SimilarImageData {
+    image: Image
+    index: number
+    score: number
+    sharedTagCount: number
+    sameAuthor: boolean
+  }
   interface MasonryItemConfig {
     infoAtBottom: boolean
     tagIncludeBookmark: boolean

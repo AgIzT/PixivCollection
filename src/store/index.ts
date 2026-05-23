@@ -2,7 +2,7 @@ import { Settings } from '@orilight/vue-settings'
 import { useFullscreen, usePreferredColorScheme } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { ONLINE_API, ONLINE_USER_ID } from '@/config'
-import { transformData } from '@/utils'
+import { hexToHSL, isGenericTag, transformData } from '@/utils'
 
 export const useStore = defineStore('main', {
   state: () => ({
@@ -38,7 +38,7 @@ export const useStore = defineStore('main', {
       infoAtBottom: false,
       showTagTranslation: true,
       showAIBadge: true,
-      imageSortBy: 'default' as 'default' | 'id_desc' | 'id_asc' | 'bookmark_desc',
+      imageSortBy: 'default' as 'default' | 'id_desc' | 'id_asc' | 'bookmark_desc' | 'color_hue',
       virtualListEnable: true,
       showShadow: true,
     },
@@ -220,6 +220,50 @@ export const useStore = defineStore('main', {
     imagesFiltered(): Image[] {
       return this.images.filter(this.imageFilter)
     },
+    getSimilarImages() {
+      return (image: Image | null): SimilarImageData[] => {
+        if (!image)
+          return []
+
+        const sourceTags = new Set(
+          image.tags
+            .filter(tag => !isGenericTag(tag))
+            .map(tag => tag.name),
+        )
+
+        return this.imagesFiltered
+          .map((candidate, index) => {
+            if (candidate.id === image.id)
+              return null
+
+            const sharedTagCount = candidate.tags
+              .filter(tag => sourceTags.has(tag.name) && !isGenericTag(tag))
+              .length
+            const sameAuthor = candidate.author.id === image.author.id
+            const score = sharedTagCount * 10 + (sameAuthor ? 3 : 0)
+
+            if (score <= 0)
+              return null
+
+            return {
+              image: candidate,
+              index,
+              score,
+              sharedTagCount,
+              sameAuthor,
+            }
+          })
+          .filter((item): item is SimilarImageData => item !== null)
+          .sort((a, b) => {
+            if (b.score !== a.score)
+              return b.score - a.score
+            if (b.sharedTagCount !== a.sharedTagCount)
+              return b.sharedTagCount - a.sharedTagCount
+            return b.image.bookmark - a.image.bookmark
+          })
+          .slice(0, 10)
+      }
+    },
   },
   actions: {
     async fetchFromAPI() {
@@ -335,6 +379,17 @@ export const useStore = defineStore('main', {
           return a.part - b.part
         if (this.masonryConfig.imageSortBy === 'bookmark_desc')
           return b.bookmark - a.bookmark
+        if (this.masonryConfig.imageSortBy === 'color_hue') {
+          const colorA = hexToHSL(a.dominant_color)
+          const colorB = hexToHSL(b.dominant_color)
+          if (colorA.h !== colorB.h)
+            return colorA.h - colorB.h
+          if (colorA.s !== colorB.s)
+            return colorB.s - colorA.s
+          if (colorA.l !== colorB.l)
+            return colorA.l - colorB.l
+          return b.id - a.id
+        }
         if (this.masonryConfig.imageSortBy === 'id_desc')
           return b.id - a.id
         return (a.id - b.id)

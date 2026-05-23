@@ -40,6 +40,7 @@ declare module 'vue' {
     SidebarBlock: typeof import('./src/components/Sidebar/SidebarBlock.vue')['default']
     SidebarHead: typeof import('./src/components/Sidebar/SidebarHead.vue')['default']
     SidebarMask: typeof import('./src/components/Sidebar/SidebarMask.vue')['default']
+    SimilarImages: typeof import('./src/components/SimilarImages.vue')['default']
     Switch: typeof import('./src/components/common/Switch.vue')['default']
     TextBox: typeof import('./src/components/common/TextBox.vue')['default']
     Tip: typeof import('./src/components/Tip.vue')['default']

@@ -92,8 +92,61 @@ export function copyToClipboard(content: string | number) {
   navigator.clipboard.writeText(String(content))
 }
 
+export function hexToHSL(hex: string) {
+  const color = normalizeHexColor(hex)
+  const r = Number.parseInt(color.slice(0, 2), 16) / 255
+  const g = Number.parseInt(color.slice(2, 4), 16) / 255
+  const b = Number.parseInt(color.slice(4, 6), 16) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  let h = 0
+  let s = 0
+  const l = (max + min) / 2
+
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0)
+        break
+      case g:
+        h = (b - r) / d + 2
+        break
+      case b:
+        h = (r - g) / d + 4
+        break
+    }
+    h /= 6
+  }
+
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100),
+  }
+}
+
 function normalizeTagText(text: string | null | undefined) {
   return (text || '').trim().toLowerCase().replace(/\s+/g, '')
+}
+
+function normalizeHexColor(hex: string) {
+  const value = hex.trim()
+  const color = value.startsWith('#') ? value.slice(1) : value
+
+  if (/^[\da-f]{3}$/i.test(color))
+    return color.split('').map(char => char + char).join('')
+
+  if (/^[\da-f]{6}$/i.test(color))
+    return color
+
+  return 'ffffff'
+}
+
+export function isGenericTag(tag: Tag | string) {
+  const tagName = typeof tag === 'string' ? tag : tag.name
+  return normalizeTagText(tagName).includes('users入り')
 }
 
 export function isAIArtwork(tags: Tag[]) {

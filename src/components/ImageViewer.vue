@@ -96,6 +96,10 @@
       >
         <IconRight class="mx-auto size-6 translate-x-0.5 stroke-2" />
       </button>
+      <SimilarImages
+        :hidden="imageInteracting"
+        :image-data="imageViewer.info"
+      />
       <div class="relative">
         <div
           class="absolute max-w-none cursor-grab touch-none select-none active:cursor-grabbing"
@@ -143,6 +147,7 @@ const thumbnailSrc = ref('')
 const imageSrc = ref('')
 const mouseRef = useMouse({ type: 'client' })
 const loadingImage = ref(false)
+const imageInteracting = ref(false)
 const loadingImageId = ref('')
 const windowSize = reactive(useWindowSize())
 const showInfo = ref(true)
@@ -153,6 +158,7 @@ const touchCenterPosition = { x: 0, y: 0 }
 let startDistance = 0
 let initialRatio = 0
 let imageLoader: HTMLImageElement
+let interactionTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(imageViewerShow, (val) => {
   if (!val) {
@@ -209,6 +215,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  if (interactionTimer)
+    clearTimeout(interactionTimer)
 })
 
 function preloadNearbyImage(index: number) {
@@ -253,6 +261,7 @@ function restoreImage() {
 
 function handleMouseDragStart() {
   imageGragging.value = true
+  startImageInteraction()
 
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('mouseup', handleMouseDragEnd)
@@ -266,6 +275,7 @@ function handleMouseMove(e: MouseEvent) {
 
 function handleMouseDragEnd() {
   imageGragging.value = false
+  endImageInteraction()
 
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('mouseup', handleMouseDragEnd)
@@ -273,6 +283,8 @@ function handleMouseDragEnd() {
 }
 
 function handleTouchStart(e: TouchEvent) {
+  startImageInteraction()
+
   if (e.touches.length < 2) {
     imageGragging.value = true
     touchStartPosition.x = e.touches[0].clientX
@@ -318,6 +330,7 @@ function handleTouchMove(e: TouchEvent) {
 
 function handleTouchEnd() {
   imageGragging.value = false
+  endImageInteraction()
 
   window.removeEventListener('touchmove', handleTouchMove)
 }
@@ -335,6 +348,8 @@ function handleWheelScroll(e: WheelEvent) {
 }
 
 function handleZoom(newRatio: number, centerPostiion: { x: number, y: number }, touch = false) {
+  hideSimilarImagesTemporarily()
+
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
   const deltaX = centerPostiion.x - (imagePos.value.x - ((windowWidth - imageSize.value.width) / 2) + windowWidth / 2)
@@ -351,6 +366,29 @@ function handleZoom(newRatio: number, centerPostiion: { x: number, y: number }, 
   }
 
   imageRatio.value = newRatio
+}
+
+function startImageInteraction() {
+  if (interactionTimer) {
+    clearTimeout(interactionTimer)
+    interactionTimer = null
+  }
+  imageInteracting.value = true
+}
+
+function endImageInteraction(delay = 450) {
+  if (interactionTimer)
+    clearTimeout(interactionTimer)
+
+  interactionTimer = setTimeout(() => {
+    imageInteracting.value = false
+    interactionTimer = null
+  }, delay)
+}
+
+function hideSimilarImagesTemporarily() {
+  startImageInteraction()
+  endImageInteraction(700)
 }
 
 function downloadImage() {
