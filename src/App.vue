@@ -19,6 +19,7 @@
       <Tip v-if="!loading && !imagesFiltered.length">
         无数据
       </Tip>
+      <StatsPanel />
       <ImageViewer />
       <DebugInfo v-if="debug.enable" />
     </div>
@@ -49,6 +50,7 @@ const {
   imageViewer,
   debug,
   showSidebar,
+  showStats,
 } = toRefs(store)
 
 const receivedLength = ref(0)
@@ -56,7 +58,7 @@ const contentLength = ref(0)
 
 let osInstance: OverlayScrollbars | null = null
 
-watch(() => [imageViewer.value.show, showSidebar.value], (show) => {
+watch(() => [imageViewer.value.show, showSidebar.value, showStats.value], (show) => {
   if (show.some(i => i)) {
     osInstance?.options({ overflow: { y: 'hidden' }, scrollbars: { visibility: 'hidden' } })
   }

@@ -36,6 +36,13 @@
         </div>
       </div>
       <button
+        v-show="!filterConfig.search.enable"
+        class="absolute right-[60px] block size-[60px] hover:bg-gray-400/20 sm:hidden"
+        @click="store.showStats = true"
+      >
+        <IconChart class="mx-auto size-6" />
+      </button>
+      <button
         class="absolute right-0 block size-[60px] hover:bg-gray-400/20 sm:hidden"
         @click="store.toggleSearch"
       >
@@ -50,6 +57,12 @@
         <span class="text-[#0398fa]">Pixiv</span>Collection
       </div>
       <div class="absolute right-0 top-0 hidden lg:flex">
+        <button
+          class="size-[60px] hover:bg-gray-400/20"
+          @click="store.showStats = true"
+        >
+          <IconChart class="mx-auto size-6" />
+        </button>
         <button
           class="size-[60px] hover:bg-gray-400/20"
           @click="openGithub"

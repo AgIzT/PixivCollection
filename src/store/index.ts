@@ -7,6 +7,7 @@ import { hexToHSL, isGenericTag, transformData } from '@/utils'
 export const useStore = defineStore('main', {
   state: () => ({
     showSidebar: false,
+    showStats: false,
     showNav: true,
 
     loading: true,

@@ -86,6 +86,9 @@
           显示 AI 角标<Switch v-model="masonryConfig.showAIBadge" class="ml-3" />
         </div>
         <div class="mt-1">
+          <CButton class="mb-1" @click="openStatsPanel">
+            统计面板
+          </CButton>
           图片排序:
           <select
             v-model="masonryConfig.imageSortBy"
@@ -629,6 +632,11 @@ function handleChangeR18(event: Event) {
 
 function openGithub() {
   window.open(LINK_GITHUB, '_blank')
+}
+
+function openStatsPanel() {
+  showSidebar.value = false
+  store.showStats = true
 }
 
 function loadDataFromFile() {
