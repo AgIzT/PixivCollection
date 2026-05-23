@@ -10,6 +10,7 @@
   >
     <MasonryItem
       v-for="item in imagesRenderList" :key="`${item.image.id}_${item.image.part}`"
+      :animate-entry="entryAnimationReady"
       :image-data="item.image"
       :image-index="item.index"
       :image-height="item.height"
@@ -37,6 +38,7 @@ const containerWidth = useThrottle(useElementSize(container).width, 300, true)
 const containerTop = useThrottle(useElementBounding(container).top, 30, true)
 
 const containerHeight = ref<number>(0)
+const entryAnimationReady = ref(false)
 
 const col = computed(() => {
   if (masonryConfig.value.col > 0)
@@ -126,6 +128,21 @@ const itemConfig = computed(() => ({
   shadow: masonryConfig.value.showShadow,
   border: masonryConfig.value.gap > 2,
 }))
+
+watch(
+  () => imagesRenderList.value.length,
+  (length) => {
+    if (!length || entryAnimationReady.value)
+      return
+
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        entryAnimationReady.value = true
+      })
+    })
+  },
+  { flush: 'post' },
+)
 
 function getColToPlace(colsTop: number[]) {
   return colsTop.indexOf(Math.min(...colsTop))

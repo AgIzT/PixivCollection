@@ -18,6 +18,67 @@
   opacity: 0;
 }
 
+.masonry-placeholder {
+  background: #f3f4f6;
+}
+
+.masonry-placeholder-blur {
+  filter: blur(20px);
+  transform: scale(1.12);
+}
+
+.masonry-placeholder-shimmer {
+  animation: masonry-placeholder-shimmer 1.8s ease-in-out infinite;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.28) 45%, transparent 70%);
+  mix-blend-mode: screen;
+}
+
+.dark .masonry-placeholder-shimmer {
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, transparent 70%);
+}
+
+.masonry-entry {
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  will-change: opacity, transform;
+}
+
+.masonry-entry-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.masonry-entry-entered {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes masonry-placeholder-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .masonry-placeholder-shimmer {
+    animation: none;
+  }
+
+  .masonry-entry {
+    transition: none;
+    will-change: auto;
+  }
+
+  .masonry-entry-enter,
+  .masonry-entry-entered {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .popup-enter-active,
 .popup-leave-active {
   transition: all .3s;
