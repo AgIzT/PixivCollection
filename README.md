@@ -1,12 +1,11 @@
-# PixivCollection 增强版
+# PixivCollection 个人修改版
 
-本仓库基于上游项目 [orilights/PixivCollection](https://github.com/orilights/PixivCollection) 继续增强，核心仍然是“将个人 Pixiv 收藏夹数据部署成静态图库”的单页应用。
+本仓库基于上游项目 [orilights/PixivCollection](https://github.com/orilights/PixivCollection) 继续。
 
-与上游相比，本版本重点增强了浏览体验、AI 作品识别、相似图片发现和收藏数据统计。最近三阶段升级已经全部合入 `main`。
 
 ![preview](docs/screenshot.jpg)
 
-## 与上游的主要区别
+## 增强
 
 ### 1. AI 作品识别与外显
 
@@ -15,7 +14,7 @@
 - 瀑布流卡片支持 AI 角标，方便在浏览时直接识别。
 - 上传本地 JSON 或在线模式加载数据时都会进行同样的 AI 标记归一化。
 
-### 2. 阶段一：视觉润色
+### 2. 视觉润色
 
 - 瀑布流图片加载占位不再只是纯色块，而是基于 `dominant_color` 生成模糊渐变背景。
 - 图片未加载完成时增加 shimmer 扫光动画，让等待状态更自然。
@@ -23,7 +22,7 @@
 - 滚动中新进入视口的卡片增加轻量 fade-up 入场动画。
 - 首屏内容不会整体弹入，动画主要作用于后续进入视口的卡片。
 
-### 3. 阶段二：浏览增强
+### 3. 浏览增强
 
 - 侧栏“图片排序”新增 **色相排序**。
 - 色相排序会把 `dominant_color` 转成 HSL，按 hue / saturation / lightness 排列图片，形成更接近颜色墙的浏览体验。
@@ -32,7 +31,7 @@
 - 推荐会排除 `users入り` 这类泛标签，减少无效匹配。
 - 拖动或缩放主图时，推荐条会自动隐藏，避免遮挡操作。
 
-### 4. 阶段三：统计仪表盘
+### 4. 统计仪表盘
 
 - 新增基于 Chart.js 的统计面板，可从顶部导航栏或侧栏打开。
 - 图表数据基于当前筛选结果 `imagesFiltered`，因此筛选后统计会同步变化。
@@ -44,7 +43,7 @@
   - 图片尺寸散点：按宽高散点展示图片尺寸，并区分横向、竖向、方形。
 - 统计面板支持暗色模式、关闭按钮和 `Esc` 关闭。
 
-## 原上游保留能力
+## 原上游能力
 
 - 静态 SPA，无后端依赖。
 - 默认从 `images.json` 加载收藏数据。
@@ -132,14 +131,8 @@ pnpm build
 
 ## 待审查技术债
 
-以下三点不影响当前功能，但建议后续集中优化：
+以下问题暂不影响当前功能：
 
 1. `MasonryItem.vue` 里的 `normalizeHexColor` / `hexToRgb` 等颜色工具函数和 `utils/index.ts` 中已有颜色工具存在重复，后续可以统一迁移到 `utils`。
 2. `StatsPanel` 的图表更新目前采用 `destroy + new Chart`，可以改成更新 `chart.data` 后调用 `chart.update()`，以获得更平滑的过渡动画并减少重建成本。
 3. `MasonryItem` 的 `will-change: opacity, transform` 在动画结束后仍保留，图片数量很大时可能占用额外 GPU 内存；可以在动画完成后移除该提示。
-
-## 验证状态
-
-- 三阶段功能均已合入 `main`。
-- `pnpm build` 已通过。
-- `pnpm lint` 当前会因项目 ESLint 配置引用未安装的 `@eslint/eslintrc` 而提前失败，这属于现有配置问题，尚未在本次 README 更新中处理。
