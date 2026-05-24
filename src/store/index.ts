@@ -40,6 +40,7 @@ export const useStore = defineStore('main', {
       showTagTranslation: true,
       showAIBadge: true,
       imageSortBy: 'default' as 'default' | 'id_desc' | 'id_asc' | 'bookmark_desc' | 'color_hue',
+      colorHueSortStart: MASONRY_COLOR_HUE_SORT_START,
       virtualListEnable: true,
       showShadow: true,
     },
@@ -383,8 +384,8 @@ export const useStore = defineStore('main', {
         if (this.masonryConfig.imageSortBy === 'color_hue') {
           const colorA = hexToHSL(a.dominant_color)
           const colorB = hexToHSL(b.dominant_color)
-          const hueA = getRotatedHue(colorA.h)
-          const hueB = getRotatedHue(colorB.h)
+          const hueA = getRotatedHue(colorA.h, this.masonryConfig.colorHueSortStart)
+          const hueB = getRotatedHue(colorB.h, this.masonryConfig.colorHueSortStart)
           if (hueA !== hueB)
             return hueA - hueB
           if (colorA.s !== colorB.s)
@@ -401,6 +402,7 @@ export const useStore = defineStore('main', {
   },
 })
 
-function getRotatedHue(hue: number) {
-  return (hue - MASONRY_COLOR_HUE_SORT_START + 360) % 360
+function getRotatedHue(hue: number, startHue: number) {
+  const normalizedStartHue = ((startHue % 360) + 360) % 360
+  return (hue - normalizedStartHue + 360) % 360
 }

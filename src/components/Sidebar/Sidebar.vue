@@ -70,6 +70,11 @@
         </div>
       </SidebarBlock>
       <SidebarBlock>
+        <div class="mb-1">
+          <CButton @click="openStatsPanel">
+            统计面板
+          </CButton>
+        </div>
         <div v-if="!ONLINE_MODE" class="flex items-center">
           合并显示多P<Switch v-model="masonryConfig.mergeSameIdImage" class="ml-3" />
         </div>
@@ -85,10 +90,7 @@
         <div class="flex items-center">
           显示 AI 角标<Switch v-model="masonryConfig.showAIBadge" class="ml-3" />
         </div>
-        <div class="mt-1">
-          <CButton class="mb-1" @click="openStatsPanel">
-            统计面板
-          </CButton>
+        <div class="mt-1 flex flex-wrap items-center gap-y-1">
           图片排序:
           <select
             v-model="masonryConfig.imageSortBy"
@@ -111,6 +113,25 @@
               不排序
             </option>
           </select>
+        </div>
+        <div
+          v-if="masonryConfig.imageSortBy === 'color_hue'"
+          class="mt-1 flex flex-wrap items-center gap-1"
+        >
+          <span class="mr-1">色相起点:</span>
+          <button
+            v-for="preset in COLOR_HUE_SORT_PRESETS"
+            :key="preset.value"
+            class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-sm transition-colors hover:border-blue-500 dark:border-white/20 dark:hover:border-blue-500"
+            :class="{ '!border-blue-500 bg-blue-500/10 dark:!border-blue-400': preset.value === masonryConfig.colorHueSortStart }"
+            @click="setColorHueSortStart(preset.value)"
+          >
+            <span
+              class="size-3 rounded-full border border-black/10 dark:border-white/20"
+              :style="{ backgroundColor: preset.color }"
+            />
+            {{ preset.label }}
+          </button>
         </div>
       </SidebarBlock>
       <SidebarHead>图片筛选</SidebarHead>
@@ -453,6 +474,16 @@ const showFullTags = ref(false)
 const searchAuthor = ref('')
 const searchTag = ref('')
 
+const COLOR_HUE_SORT_PRESETS = [
+  { label: '蓝', value: 240, color: '#3b82f6' },
+  { label: '紫', value: 270, color: '#8b5cf6' },
+  { label: '红', value: 0, color: '#ef4444' },
+  { label: '橙', value: 30, color: '#f97316' },
+  { label: '黄', value: 60, color: '#eab308' },
+  { label: '绿', value: 120, color: '#22c55e' },
+  { label: '青', value: 180, color: '#06b6d4' },
+] as const
+
 const illustCount = computed(() => new Set(images.value.map(i => i.id)).size)
 const authorCount = computed(() => new Set(images.value.map(i => i.author.id)).size)
 const tagCount = computed(() => new Set(images.value.flatMap(i => i.tags.map(t => t.name))).size)
@@ -637,6 +668,11 @@ function openGithub() {
 function openStatsPanel() {
   showSidebar.value = false
   store.showStats = true
+}
+
+function setColorHueSortStart(value: number) {
+  masonryConfig.value.colorHueSortStart = value
+  store.sortImages()
 }
 
 function loadDataFromFile() {
