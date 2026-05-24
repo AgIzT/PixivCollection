@@ -108,6 +108,7 @@ pnpm build
 | `VITE_IMAGE_FORMAT_THUMBNAIL` | `webp` | 缩略图格式，设置为 `<ext>` 时使用原图格式 |
 | `VITE_IMAGE_ALLOW_DOWNLOAD_ORIGINAL` | `true` | 是否允许下载原图 |
 | `VITE_MASONRY_LOAD_DELAY` | `300` | 瀑布流图片加载延迟，单位毫秒 |
+| `VITE_MASONRY_COLOR_HUE_SORT_START` | `240` | 色相排序的起始色相角度，默认从蓝色开始，紫色可设为 `270` |
 | `VITE_ONLINE_MODE` | `false` | 是否开启在线模式 |
 | `VITE_ONLINE_API` | 空 | HibiAPI Pixiv 收藏夹接口 |
 | `VITE_ONLINE_USER_ID` | 空 | Pixiv 用户 ID |

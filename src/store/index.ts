@@ -1,7 +1,7 @@
 import { Settings } from '@orilight/vue-settings'
 import { useFullscreen, usePreferredColorScheme } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { ONLINE_API, ONLINE_USER_ID } from '@/config'
+import { MASONRY_COLOR_HUE_SORT_START, ONLINE_API, ONLINE_USER_ID } from '@/config'
 import { hexToHSL, isGenericTag, transformData } from '@/utils'
 
 export const useStore = defineStore('main', {
@@ -383,8 +383,10 @@ export const useStore = defineStore('main', {
         if (this.masonryConfig.imageSortBy === 'color_hue') {
           const colorA = hexToHSL(a.dominant_color)
           const colorB = hexToHSL(b.dominant_color)
-          if (colorA.h !== colorB.h)
-            return colorA.h - colorB.h
+          const hueA = getRotatedHue(colorA.h)
+          const hueB = getRotatedHue(colorB.h)
+          if (hueA !== hueB)
+            return hueA - hueB
           if (colorA.s !== colorB.s)
             return colorB.s - colorA.s
           if (colorA.l !== colorB.l)
@@ -398,3 +400,7 @@ export const useStore = defineStore('main', {
     },
   },
 })
+
+function getRotatedHue(hue: number) {
+  return (hue - MASONRY_COLOR_HUE_SORT_START + 360) % 360
+}
