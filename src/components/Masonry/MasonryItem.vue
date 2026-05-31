@@ -7,7 +7,7 @@
     }"
   >
     <div
-      class="size-full"
+      class="relative size-full"
       :class="{
         'masonry-entry': shouldAnimateEntry,
         'masonry-entry-enter': shouldAnimateEntry && !hasEntered,
@@ -52,13 +52,13 @@
       </Transition>
       <div
         v-if="config.showAIBadge && imageData.aiGenerated"
-        class="pointer-events-none absolute right-1 top-1 rounded-full bg-sky-200/90 px-2 py-0.5 text-xs font-semibold tracking-wide text-sky-900 shadow-sm"
+        class="pointer-events-none absolute right-1 top-1 z-30 rounded-full bg-sky-200/90 px-2 py-0.5 text-xs font-semibold tracking-wide text-sky-900 shadow-sm"
       >
         AI生成
       </div>
       <div
         v-if="imageCount > 1"
-        class="absolute right-1 flex items-center rounded-full bg-black/50 px-2 py-0.5 text-sm text-white"
+        class="pointer-events-none absolute right-1 z-30 flex items-center rounded-full bg-black/50 px-2 py-0.5 text-sm text-white"
         :class="config.showAIBadge && imageData.aiGenerated ? 'top-9' : 'top-1'"
       >
         <IconStack class="mr-1 size-3" />
@@ -66,7 +66,7 @@
       </div>
       <ImageInfo
         v-if="!config.infoAtBottom"
-        class="absolute top-0 size-full cursor-pointer bg-black/50 opacity-0 transition-all duration-300 group-hover:opacity-100"
+        class="absolute top-0 z-20 size-full cursor-pointer bg-black/50 opacity-0 transition-all duration-300 group-hover:opacity-100"
         :image-data="imageData"
         :image-index="imageIndex"
         :config="config"
